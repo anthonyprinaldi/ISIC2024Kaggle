@@ -63,7 +63,7 @@ class ISICDataset(Dataset):
             label = self.labels[idx]
             return (image, metadata), label
         else:
-            return ((image, metadata),)
+            return ((image, metadata), None)
 
 
 class ISICDataModule(L.LightningDataModule):
