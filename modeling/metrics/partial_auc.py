@@ -42,6 +42,9 @@ class AUC_20(Metric):
         y_true = dim_zero_cat(self.y_true)
         y_pred = dim_zero_cat(self.y_pred)
 
+        # add sigmoid
+        y_pred = torch.sigmoid(y_pred)
+
         v_gt = abs(y_true.numpy() - 1)
         v_pred = -1.0 * y_pred.numpy()
         min_tpr = 0.8
