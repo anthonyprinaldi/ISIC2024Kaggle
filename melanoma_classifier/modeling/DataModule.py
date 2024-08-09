@@ -122,7 +122,6 @@ class ISICDataModule(L.LightningDataModule):
             self.possible_meta_features,
             self.possible_n_meta_features,
         ) = get_df(
-            data_dir=self.train_hdf5_file.resolve().parent,
             use_meta=len(self.meta_features) > 0,
             train_metadata_path=self.train_metadata,
             test_metadata_path=self.test_metadata,
