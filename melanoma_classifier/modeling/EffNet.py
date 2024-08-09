@@ -1,11 +1,11 @@
 from efficientnet_pytorch import EfficientNet
 
 models = {
-    "EfficientNetB0": EfficientNet.from_pretrained("efficientnet-b0", num_classes=1),
-    "EfficientNetB1": EfficientNet.from_pretrained("efficientnet-b1", num_classes=1),
-    "EfficientNetB2": EfficientNet.from_pretrained("efficientnet-b2", num_classes=1),
-    "EfficientNetB3": EfficientNet.from_pretrained("efficientnet-b3", num_classes=1),
-    "EfficientNetB4": EfficientNet.from_pretrained("efficientnet-b4", num_classes=1),
+    "EfficientNetB0": EfficientNet.from_pretrained("efficientnet-b0", num_classes=1, weights_path='efficientnet-b0.pth'),
+    "EfficientNetB1": EfficientNet.from_pretrained("efficientnet-b1", num_classes=1, weights_path='efficientnet-b1.pth'),
+    "EfficientNetB2": EfficientNet.from_pretrained("efficientnet-b2", num_classes=1, weights_path='efficientnet-b2.pth'),
+    "EfficientNetB3": EfficientNet.from_pretrained("efficientnet-b3", num_classes=1, weights_path='efficientnet-b3.pth'),
+    "EfficientNetB4": EfficientNet.from_pretrained("efficientnet-b4", num_classes=1, weights_path='efficientnet-b4.pth'),
 }
 
 image_sizes = {
