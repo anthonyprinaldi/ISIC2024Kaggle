@@ -163,3 +163,12 @@ cython_debug/
 
 runs/
 train-image/
+
+# competition specific files
+isic-2024-challenge.zip
+test-image.hdf5
+train-image.hdf5
+test-metadata.csv
+train-metadata.csv
+train-metadata-processed-folds.csv
+train-image/
