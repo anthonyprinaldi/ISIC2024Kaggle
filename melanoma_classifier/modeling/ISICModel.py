@@ -112,6 +112,10 @@ class ISICModel(L.LightningModule):
 
         return step_dict["loss"]
     
+    def predict_step(self, batch):
+        logits = self._step(batch, metrics=False, return_preds=True)["preds"]
+        return torch.sigmoid(logits)
+    
     def on_validation_epoch_end(self):
         self.log("val_auc_20", self.val_auc_20.compute(), prog_bar=True, on_step=False, on_epoch=True)
         self.val_auc_20.reset()

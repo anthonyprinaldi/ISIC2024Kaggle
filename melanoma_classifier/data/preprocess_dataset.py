@@ -100,7 +100,6 @@ def process_dataset(
 
 
 def get_df(
-    data_dir: Path,
     use_meta: bool,
     train_metadata_path: Path = TRAIN_METADATA_PATH,
     test_metadata_path: Path = TEST_METADATA_PATH,
@@ -110,8 +109,6 @@ def get_df(
 ) -> Tuple[pd.DataFrame, pd.DataFrame, h5py.File, h5py.File, List[str], int, int]:
     """Load in the data, preprocess, and return the dataframes.
 
-    :param data_dir: Location of metadata and hdf5 files
-    :type data_dir: Path
     :param use_meta: Whether to use metadata, defaults to True
     :type use_meta: bool
     :param train_metadata_path: Name of train metadata csv,
@@ -134,12 +131,12 @@ def get_df(
     """
 
     # load metadata
-    df_train = pd.read_csv(data_dir / train_metadata_path)
-    df_test = pd.read_csv(data_dir / test_metadata_path)
+    df_train = pd.read_csv(train_metadata_path)
+    df_test = pd.read_csv(test_metadata_path)
 
     # load hdf5 files
-    df_train_hdf5 = h5py.File(data_dir / train_hdf5)
-    df_test_hdf5 = h5py.File(data_dir / test_hdf5)
+    df_train_hdf5 = h5py.File(train_hdf5)
+    df_test_hdf5 = h5py.File(test_hdf5)
 
     if use_meta:
         df_train, df_test, meta_features = process_dataset(
@@ -153,7 +150,7 @@ def get_df(
         n_meta_features = 0
 
     # add fold column
-    with open(data_dir / fold_path, "r") as f:
+    with open(fold_path, "r") as f:
         folds = json.load(f)
 
     flip_folds = {}

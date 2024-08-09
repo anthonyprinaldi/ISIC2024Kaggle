@@ -9,8 +9,8 @@ import lightning as L
 import numpy as np
 import pandas as pd
 import torch
-from data import FOLD_PATH, get_df
-from data.constants import ISIC_ID_COLUMN
+from ..data import FOLD_PATH, get_df
+from ..data.constants import ISIC_ID_COLUMN
 from torch.utils.data import DataLoader, Dataset
 
 
@@ -18,8 +18,8 @@ class ISICDataset(Dataset):
     def __init__(
         self,
         hdf5_filepath: str,
-        labels: np.ndarray,
         metadata: pd.DataFrame,
+        labels: Optional[np.ndarray]=None,
         transform: Optional[A.Compose] = None,
         mode: str = "train",
         meta_features: Optional[List[str]] = None,
@@ -43,14 +43,13 @@ class ISICDataset(Dataset):
             ), f"Labels and dataset size do not match: {self.labels.shape[0]} != {self.metadata.shape[0]}"
 
     def __len__(self):
-        return self.labels.shape[0]
+        return self.metadata.shape[0]
 
     def __getitem__(self, idx):
         metadata = None
         buffer = self.hdf5[self.subjects[idx]][()]
         image = cv2.imdecode(np.frombuffer(buffer, np.uint8), cv2.IMREAD_COLOR)
         image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
-        label = self.labels[idx]
 
         if self.transform:
             image = self.transform(image=image)["image"]
@@ -61,9 +60,10 @@ class ISICDataset(Dataset):
             ).float()
 
         if self.mode == "train":
+            label = self.labels[idx]
             return (image, metadata), label
         else:
-            return ((image, metadata),)
+            return ((image, metadata), torch.tensor(0).float())
 
 
 class ISICDataModule(L.LightningDataModule):
@@ -122,7 +122,6 @@ class ISICDataModule(L.LightningDataModule):
             self.possible_meta_features,
             self.possible_n_meta_features,
         ) = get_df(
-            data_dir=self.train_hdf5_file.resolve().parent,
             use_meta=len(self.meta_features) > 0,
             train_metadata_path=self.train_metadata,
             test_metadata_path=self.test_metadata,
@@ -176,8 +175,15 @@ class ISICDataModule(L.LightningDataModule):
                 self.val_dataset = None
 
         if stage == "test":
-            raise NotImplementedError("Test dataset not implemented yet.")
-
+            self.test_dataset = ISICDataset(
+                hdf5_filepath=self.test_hdf5_file,
+                labels=None,
+                transform=self.val_transform,
+                metadata=self.test_metadata,
+                mode="test",
+                meta_features=self.meta_features,
+            )
+        
         if stage == "validate":
             raise NotImplementedError("Validation dataset not implemented yet.")
         
@@ -201,3 +207,12 @@ class ISICDataModule(L.LightningDataModule):
             )
         else:
             return None
+        
+    def test_dataloader(self):
+        return DataLoader(
+            self.test_dataset,
+            batch_size=self.batch_size,
+            shuffle=False,
+            num_workers=self.num_workers,
+            pin_memory=True,
+        )
