@@ -9,8 +9,8 @@ import lightning as L
 import numpy as np
 import pandas as pd
 import torch
-from data import FOLD_PATH, get_df
-from data.constants import ISIC_ID_COLUMN
+from ..data import FOLD_PATH, get_df
+from ..data.constants import ISIC_ID_COLUMN
 from torch.utils.data import DataLoader, Dataset
 
 
