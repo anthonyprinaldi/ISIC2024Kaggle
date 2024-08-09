@@ -63,7 +63,7 @@ class ISICDataset(Dataset):
             label = self.labels[idx]
             return (image, metadata), label
         else:
-            return ((image, metadata), None)
+            return ((image, metadata), torch.tensor(0).float())
 
 
 class ISICDataModule(L.LightningDataModule):
