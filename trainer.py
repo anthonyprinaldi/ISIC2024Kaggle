@@ -1,11 +1,11 @@
 from pathlib import Path
 
 import lightning as L
-from data.constants import (HDF5_TEST, HDF5_TRAIN, TARGET_COL,
-                            TEST_METADATA_PATH, TRAIN_METADATA_PATH)
 from lightning.pytorch.callbacks import ModelCheckpoint
 from lightning.pytorch.loggers import TensorBoardLogger
-from modeling import ISICDataModule, ISICModel, get_transforms
+from melanoma_classifier import (HDF5_TEST, HDF5_TRAIN, TARGET_COL,
+                                 TEST_METADATA_PATH, TRAIN_METADATA_PATH,
+                                 ISICDataModule, ISICModel, get_transforms)
 
 
 class Config:
