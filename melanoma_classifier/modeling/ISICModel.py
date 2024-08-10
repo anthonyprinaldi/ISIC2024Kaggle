@@ -1,11 +1,12 @@
-from typing import List, Optional
+from pathlib import Path
+from typing import List, Optional, Union
 
 import lightning as L
 import torch
 import torch.nn as nn
 
+from .EffNet import get_model as effnet_models
 from .EffNet import image_sizes as effnet_image_sizes
-from .EffNet import models as effnet_models
 from .metrics import AUC_20
 
 
@@ -18,10 +19,14 @@ class ISICModel(L.LightningModule):
                  calculate_metrics: bool = False,
                  num_meta_features: int = 0,
                  meta_network_dim: Optional[List[int]]=None,
-                 weight: Optional[float]=None
+                 weight: Optional[float]=None,
+                 effnet_location: Optional[Union[str, Path]]=None,
                  ):
         super().__init__()
-        self.model = effnet_models[model_name]
+        self.model = effnet_models(
+            model_name=model_name,
+            location=effnet_location,
+        )
         self.image_size = effnet_image_sizes[model_name]
         self.lr = lr
         self.weight_decay = weight_decay
