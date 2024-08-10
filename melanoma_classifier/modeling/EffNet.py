@@ -14,11 +14,11 @@ def get_model(
             location = Path(location)
         print(f"Loading EffNet model from {location}")
         models = {
-            "EfficientNetB0": EfficientNet.from_pretrained("efficientnet-b0", num_classes=1, weights_path=location / "efficientnet-b0.pth"),
-            "EfficientNetB1": EfficientNet.from_pretrained("efficientnet-b1", num_classes=1, weights_path=location / "efficientnet-b1.pth"),
-            "EfficientNetB2": EfficientNet.from_pretrained("efficientnet-b2", num_classes=1, weights_path=location / "efficientnet-b2.pth"),
-            "EfficientNetB3": EfficientNet.from_pretrained("efficientnet-b3", num_classes=1, weights_path=location / "efficientnet-b3.pth"),
-            "EfficientNetB4": EfficientNet.from_pretrained("efficientnet-b4", num_classes=1, weights_path=location / "efficientnet-b4.pth"),
+            "EfficientNetB0": EfficientNet.from_pretrained("efficientnet-b0", num_classes=1, weights_path=str(location / "efficientnet-b0.pth")),
+            "EfficientNetB1": EfficientNet.from_pretrained("efficientnet-b1", num_classes=1, weights_path=str(location / "efficientnet-b1.pth")),
+            "EfficientNetB2": EfficientNet.from_pretrained("efficientnet-b2", num_classes=1, weights_path=str(location / "efficientnet-b2.pth")),
+            "EfficientNetB3": EfficientNet.from_pretrained("efficientnet-b3", num_classes=1, weights_path=str(location / "efficientnet-b3.pth")),
+            "EfficientNetB4": EfficientNet.from_pretrained("efficientnet-b4", num_classes=1, weights_path=str(location / "efficientnet-b4.pth")),
         }
     
     else:
