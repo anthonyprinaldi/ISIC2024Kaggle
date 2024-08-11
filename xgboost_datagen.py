@@ -1,20 +1,22 @@
 from pathlib import Path
 
 import lightning as L
-from lightning.pytorch.callbacks import ModelCheckpoint
-from lightning.pytorch.loggers import TensorBoardLogger
+import numpy as np
+import pandas as pd
+import torch.nn as nn
 from melanoma_classifier import (HDF5_TEST, HDF5_TRAIN, TARGET_COL,
                                  TEST_METADATA_PATH, TRAIN_METADATA_PATH,
                                  ISICDataModule, ISICModel, get_transforms)
+from torch.utils.data import DataLoader
 
 
 class Config:
     MODEL_NAME = "EfficientNetB1"
     BATCH_SIZE = 64
     CUTOUT_RATIO = 0.25
-    NUM_WORKERS = 4
-    FOLD = [0,2,4]
-    RUN_NAME = "2024_fold_0_2_4"
+    NUM_WORKERS = 6
+    FOLD = [1,3,5]
+    RUN_NAME = "2024_fold_1_3_5"
     BASE_RUN_DIR = Path("runs")
     USE_META_FEATURES = [
         'age_approx',
@@ -96,60 +98,41 @@ class Config:
         16,
     ]
 
-callbacks = [
-    ModelCheckpoint(
-        dirpath=Config.BASE_RUN_DIR / Config.RUN_NAME,
-        monitor="train_loss",
-        verbose=True,
-        filename="best-train-loss-{epoch}-{train_loss:.4f}",
-    ),
-    ModelCheckpoint(
-        dirpath=Config.BASE_RUN_DIR / Config.RUN_NAME,
-        monitor="val_loss",
-        verbose=True,
-        filename="best-val-loss-{epoch}-{val_loss:.4f}",
-    ),
-    ModelCheckpoint(
-        dirpath=Config.BASE_RUN_DIR / Config.RUN_NAME,
-        monitor="val_auc_20",
-        verbose=True,
-        filename="best-val-auc_20-{epoch}-{val_auc_20:.4f}",
-        mode="max",
-    ),
-]
-
-lightning_logger = TensorBoardLogger(
-    Config.BASE_RUN_DIR / Config.RUN_NAME / "tensorboard",
-)
-
 trainer = L.Trainer(
-    default_root_dir=Config.BASE_RUN_DIR / Config.RUN_NAME,
-    max_epochs=10,
-    accelerator="auto",
     devices=[0],
-    accumulate_grad_batches=1,
-    check_val_every_n_epoch=1,
-    callbacks=callbacks,
-    precision="16-mixed",
-    gradient_clip_algorithm="value",
-    gradient_clip_val=0.5,
-    logger=lightning_logger,
-    benchmark=False,
-    deterministic=True,
-    enable_progress_bar=True,
-    log_every_n_steps=1,
-    val_check_interval=0.1,
-    num_sanity_val_steps=0,
+    logger=False
 )
 
-model = ISICModel(
-    calculate_metrics=True,
+
+class XGBoostModel(ISICModel):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+
+    def forward(self, image, metadata=None):
+        image_features = self.model(image)
+        return image_features
+
+    def predict_step(self, batch, batch_idx):
+        (image, metadata), labels = batch
+        feats = self.forward(image, metadata)
+        return feats
+    
+    def _post_init(self):
+        self.model._fc = nn.Identity()
+        self.model._swish = nn.Identity()
+        
+
+
+model = XGBoostModel.load_from_checkpoint(
+    checkpoint_path="runs/2024_fold_0_2_4/best-val-auc_20-epoch=7-val_auc_20=0.1633.ckpt",
+    calculate_metrics=False,
     num_meta_features=len(Config.USE_META_FEATURES),
     meta_network_dim=Config.META_DIMS,
     weight_decay=5e-2,
     model_name=Config.MODEL_NAME,
     weight=4.0,
 )
+model._post_init()
 
 train_trainsforms, val_transforms = get_transforms(
     img_size=model.image_size,
@@ -163,12 +146,36 @@ data_module = ISICDataModule(
     batch_size=Config.BATCH_SIZE,
     num_workers=Config.NUM_WORKERS,
     image_size=model.image_size,
-    train_transform=train_trainsforms,
-    val_transform=val_transforms,
+    # cutout_ratio=Config.CUTOUT_RATIO,
+    train_transform=val_transforms,
+    # val_transform=val_transforms,
     train_metadata=TRAIN_METADATA_PATH,
     test_metadata=TEST_METADATA_PATH,
     meta_features=Config.USE_META_FEATURES,
-    fold=Config.FOLD,
+    # fold=Config.FOLD,
 )
 
-trainer.fit(model, data_module)
+data_module.prepare_data()
+data_module.setup(stage="fit")
+
+train_dataloader = DataLoader(
+    data_module.train_dataset,
+    batch_size=Config.BATCH_SIZE,
+    shuffle=False,
+    num_workers=Config.NUM_WORKERS,
+    pin_memory=True,
+)
+
+preds = trainer.predict(model, train_dataloader) # N, 1280
+preds = np.concatenate(preds, axis=0)  # N, 1280
+
+# create df of preds
+df_preds = pd.DataFrame(preds, columns=[f"pred_{i}" for i in range(preds.shape[1])])
+
+# add preds features to the metadata
+df_train = data_module.train_metadata
+
+df_train = pd.concat([df_train, df_preds], axis=1)
+
+# save the new metadata
+df_train.to_csv("train_metadata_with_image_feats.csv", index=False)
