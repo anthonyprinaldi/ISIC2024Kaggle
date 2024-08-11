@@ -163,7 +163,6 @@ data_module = ISICDataModule(
     batch_size=Config.BATCH_SIZE,
     num_workers=Config.NUM_WORKERS,
     image_size=model.image_size,
-    cutout_ratio=Config.CUTOUT_RATIO,
     train_transform=train_trainsforms,
     val_transform=val_transforms,
     train_metadata=TRAIN_METADATA_PATH,

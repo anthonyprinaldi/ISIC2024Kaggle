@@ -75,7 +75,6 @@ class ISICDataModule(L.LightningDataModule):
         batch_size: int,
         num_workers: int,
         image_size: int,
-        cutout_ratio: float,
         train_metadata: Path,
         test_metadata: Path,
         train_transform: Optional[A.Compose] = None,
@@ -92,7 +91,6 @@ class ISICDataModule(L.LightningDataModule):
         self.batch_size = batch_size
         self.num_workers = num_workers
         self.image_size = image_size
-        self.cutout_ratio = cutout_ratio
         self.train_transform = train_transform
         self.val_transform = val_transform
         self.train_metadata = train_metadata
@@ -205,8 +203,6 @@ class ISICDataModule(L.LightningDataModule):
                 num_workers=self.num_workers,
                 pin_memory=True,
             )
-        else:
-            return None
         
     def test_dataloader(self):
         return DataLoader(
