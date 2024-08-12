@@ -6,7 +6,7 @@ import pandas as pd
 import torch.nn as nn
 from melanoma_classifier import (HDF5_TEST, HDF5_TRAIN, TARGET_COL,
                                  TEST_METADATA_PATH, TRAIN_METADATA_PATH,
-                                 ISICDataModule, ISICModel, get_transforms)
+                                 ISICDataModule, XGBoostModel, get_transforms)
 from torch.utils.data import DataLoader
 
 
@@ -102,26 +102,6 @@ trainer = L.Trainer(
     devices=[0],
     logger=False
 )
-
-
-class XGBoostModel(ISICModel):
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-
-    def forward(self, image, metadata=None):
-        image_features = self.model(image)
-        return image_features
-
-    def predict_step(self, batch, batch_idx):
-        (image, metadata), labels = batch
-        feats = self.forward(image, metadata)
-        return feats
-    
-    def _post_init(self):
-        self.model._fc = nn.Identity()
-        self.model._swish = nn.Identity()
-        
-
 
 model = XGBoostModel.load_from_checkpoint(
     checkpoint_path="runs/2024_fold_0_2_4/best-val-auc_20-epoch=7-val_auc_20=0.1633.ckpt",
